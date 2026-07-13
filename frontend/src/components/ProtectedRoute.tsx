@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppSelector } from '../store/store';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -7,7 +7,8 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isLoading } = useAppSelector((state) => state.auth);
+  const isAuthenticated = !!user;
 
   if (isLoading) {
     return (

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/store';
+import { loginUser, clearError, setCredentialsFromOAuth } from '../store/authSlice';
 import type { FormEvent } from 'react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, error, clearError } = useAuth();
+  const dispatch = useAppDispatch();
+  const error = useAppSelector((state) => state.auth.error);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -20,26 +22,28 @@ export default function LoginPage() {
     const role = searchParams.get('role');
 
     if (accessToken && refreshToken && oauthUsername) {
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify({
-        username: oauthUsername,
-        fullName: fullName || '',
-        email: email || '',
-        role: role || 'ROLE_CUSTOMER',
+      dispatch(setCredentialsFromOAuth({
+        accessToken,
+        refreshToken,
+        user: {
+          username: oauthUsername,
+          fullName: fullName || '',
+          email: email || '',
+          role: role || 'ROLE_CUSTOMER',
+        },
       }));
-      window.location.href = '/dashboard';
+      navigate('/dashboard', { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, dispatch, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await login(username, password);
+      await dispatch(loginUser({ username, password })).unwrap();
       navigate('/dashboard');
     } catch {
-      // error is handled by AuthContext
+      // error is handled by Redux slice
     } finally {
       setIsSubmitting(false);
     }
@@ -60,7 +64,7 @@ export default function LoginPage() {
         {error && (
           <div className="auth-error">
             <span>{error}</span>
-            <button onClick={clearError}>&times;</button>
+            <button onClick={() => dispatch(clearError())}>&times;</button>
           </div>
         )}
 

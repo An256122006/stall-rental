@@ -1,12 +1,14 @@
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/store';
+import { logoutUser } from '../store/authSlice';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
+    await dispatch(logoutUser());
     navigate('/login');
   };
 

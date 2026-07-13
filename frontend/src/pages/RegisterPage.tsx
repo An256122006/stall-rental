@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/store';
+import { registerUser, clearError } from '../store/authSlice';
 import type { FormEvent } from 'react';
 
 export default function RegisterPage() {
@@ -14,13 +15,14 @@ export default function RegisterPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState('');
-  const { register, error, clearError } = useAuth();
+  const dispatch = useAppDispatch();
+  const error = useAppSelector((state) => state.auth.error);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setLocalError('');
-    clearError();
+    dispatch(clearError());
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -39,16 +41,16 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      await register(
-        formData.username,
-        formData.password,
-        formData.fullName,
-        formData.email,
-        formData.phone || undefined
-      );
+      await dispatch(registerUser({
+        username: formData.username,
+        password: formData.password,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || undefined,
+      })).unwrap();
       navigate('/dashboard');
     } catch {
-      // error is handled by AuthContext
+      // error is handled by Redux slice
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +69,7 @@ export default function RegisterPage() {
         {displayError && (
           <div className="auth-error">
             <span>{displayError}</span>
-            <button onClick={() => { setLocalError(''); clearError(); }}>&times;</button>
+            <button onClick={() => { setLocalError(''); dispatch(clearError()); }}>&times;</button>
           </div>
         )}
 
