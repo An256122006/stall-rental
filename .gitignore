@@ -9,6 +9,9 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+.env
+**/application-dev.properties
+**/application-local.properties
 
 .idea/
 *.iws

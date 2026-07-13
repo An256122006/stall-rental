@@ -24,6 +24,9 @@ public class User {
     private String email;
     private String fullName;
     private String phone;
+    private String address;
+    private String taxCode;
+    private String identityNumber;
     @Enumerated(EnumType.STRING)
     private Role role;
     private Boolean status;

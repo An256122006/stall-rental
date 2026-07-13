@@ -3,8 +3,15 @@ import { useAppSelector } from './store/store';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import BoothsPage from './pages/BoothsPage';
+import CustomersPage from './pages/CustomersPage';
+import BookingsPage from './pages/BookingsPage';
+import ContractsPage from './pages/ContractsPage';
+import PaymentsPage from './pages/PaymentsPage';
+import MaintenancePage from './pages/MaintenancePage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
 import './App.css';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -18,22 +25,65 @@ function App() {
       <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        
+        {/* Protected routes wrapped in Layout */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <Layout><DashboardPage /></Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/admin"
+          path="/booths"
           element={
-            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-              <DashboardPage />
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_OPERATOR']}>
+              <Layout><BoothsPage /></Layout>
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_OPERATOR']}>
+              <Layout><CustomersPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bookings"
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_OPERATOR', 'ROLE_CUSTOMER']}>
+              <Layout><BookingsPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contracts"
+          element={
+            <ProtectedRoute>
+              <Layout><ContractsPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payments"
+          element={
+            <ProtectedRoute>
+              <Layout><PaymentsPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute>
+              <Layout><MaintenancePage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
