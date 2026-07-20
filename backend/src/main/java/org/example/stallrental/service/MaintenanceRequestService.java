@@ -19,6 +19,7 @@ import java.util.List;
 public class MaintenanceRequestService {
     private final MaintenanceRequestRepository requestRepository;
     private final BoothRepository boothRepository;
+    private final org.example.stallrental.repository.ManagerRepository managerRepository;
 
     public List<MaintenanceRequest> getAll() {
         return requestRepository.findAll();
@@ -27,6 +28,19 @@ public class MaintenanceRequestService {
     public List<MaintenanceRequest> getAllForUser(UserPrincipal principal) {
         if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_CUSTOMER) {
             return requestRepository.findByCustomerId(principal.getUser().getId());
+        }
+        if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_MANAGER) {
+            java.util.Optional<org.example.stallrental.model.entity.Manager> managerOpt = managerRepository.findByUserId(principal.getUser().getId());
+            if (managerOpt.isPresent()) {
+                org.example.stallrental.model.entity.Area managedArea = managerOpt.get().getArea();
+                if (managedArea != null) {
+                    return requestRepository.findAll().stream()
+                            .filter(r -> r.getBooth() != null && r.getBooth().getArea().getId().equals(managedArea.getId()))
+                            .toList();
+                } else {
+                    return java.util.Collections.emptyList();
+                }
+            }
         }
         return requestRepository.findAll();
     }

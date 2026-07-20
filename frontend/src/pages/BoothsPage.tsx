@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { areaApi, boothApi } from '../api/rentalApi';
 import type { Area, Booth, BoothStatus } from '../types';
+import { useAppSelector } from '../store/store';
 
 export default function BoothsPage() {
+  const user = useAppSelector((state) => state.auth.user);
+  const isAdmin = user?.role === 'ROLE_ADMIN';
+
   const [areas, setAreas] = useState<Area[]>([]);
   const [booths, setBooths] = useState<Booth[]>([]);
   const [selectedAreaId, setSelectedAreaId] = useState<string>('ALL');
@@ -205,32 +209,34 @@ export default function BoothsPage() {
 
   return (
     <div className="booths-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>Danh mục Gian hàng & Khu vực</h2>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>Quản lý sơ đồ mặt bằng, bảng giá, trạng thái các gian hàng.</p>
+          <h2 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>Danh mục Gian hàng & Khu vực</h2>
+          <p style={{ color: 'var(--color-slate-600)', fontSize: '14.5px', marginTop: '4px', fontWeight: 500 }}>Quản lý sơ đồ mặt bằng, bảng giá, và trạng thái các gian hàng.</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn secondary" onClick={() => setShowAreaModal(true)}>+ Thêm khu vực</button>
-          <button className="btn primary" onClick={() => setShowBoothModal(true)}>+ Thêm gian hàng</button>
-        </div>
+        {isAdmin && (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="btn secondary" onClick={() => setShowAreaModal(true)}>+ Thêm khu vực</button>
+            <button className="btn primary" onClick={() => setShowBoothModal(true)}>+ Thêm gian hàng</button>
+          </div>
+        )}
       </div>
 
       {/* Filter and overview tab */}
-      <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '16px', marginBottom: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <span style={{ fontSize: '14px', fontWeight: '600', color: '#334155' }}>Lọc theo khu vực:</span>
+      <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid #E9D5FF', padding: '16px 24px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center', boxShadow: 'var(--shadow-sm)' }}>
+        <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-slate-900)' }}>Lọc theo khu vực:</span>
         <select
           value={selectedAreaId}
           onChange={(e) => setSelectedAreaId(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', minWidth: '180px' }}
+          style={{ padding: '10px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid #E9D5FF', outline: 'none', minWidth: '200px', fontFamily: 'var(--font-main)', color: 'var(--color-slate-900)', fontWeight: 600 }}
         >
           <option value="ALL">Tất cả khu vực</option>
           {areas.map(area => (
             <option key={area.id} value={area.id}>{area.name}</option>
           ))}
         </select>
-        <span style={{ fontSize: '13px', color: '#64748b' }}>
-          Hiển thị: <strong>{filteredBooths.length}</strong> gian hàng.
+        <span style={{ fontSize: '13.5px', color: 'var(--color-slate-600)', fontWeight: 500 }}>
+          Hiển thị: <strong style={{ color: 'var(--color-primary)' }}>{filteredBooths.length}</strong> gian hàng.
         </span>
       </div>
 
@@ -247,7 +253,7 @@ export default function BoothsPage() {
                 <th>Giá thuê mặc định</th>
                 <th>Phí dịch vụ</th>
                 <th>Trạng thái</th>
-                <th>Hành động</th>
+                {isAdmin && <th>Hành động</th>}
               </tr>
             </thead>
             <tbody>
@@ -272,14 +278,16 @@ export default function BoothsPage() {
                       }
                     </span>
                   </td>
-                  <td>
-                    <button className="text-btn" style={{ color: '#ef4444' }} onClick={() => booth.id && handleDeleteBooth(booth.id)}>Xóa</button>
-                  </td>
+                  {isAdmin && (
+                    <td>
+                      <button className="text-btn" style={{ color: 'var(--color-danger)' }} onClick={() => booth.id && handleDeleteBooth(booth.id)}>Xóa</button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {filteredBooths.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', color: '#94a3b8' }}>Chưa có gian hàng nào trong danh mục này.</td>
+                  <td colSpan={isAdmin ? 8 : 7} style={{ textAlign: 'center', color: '#94a3b8' }}>Chưa có gian hàng nào trong danh mục này.</td>
                 </tr>
               )}
             </tbody>
@@ -314,7 +322,6 @@ export default function BoothsPage() {
                     value={newArea.description}
                     onChange={(e) => setNewArea({ ...newArea, description: e.target.value })}
                     placeholder="Mô tả vị trí hoặc phân loại mặt hàng kinh doanh..."
-                    style={{ padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -367,7 +374,6 @@ export default function BoothsPage() {
                       required
                       value={newBooth.areaId}
                       onChange={(e) => setNewBooth({ ...newBooth, areaId: e.target.value })}
-                      style={{ padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
                     >
                       <option value="">Chọn khu vực...</option>
                       {areas.map(a => (
@@ -417,7 +423,6 @@ export default function BoothsPage() {
                     value={newBooth.description}
                     onChange={(e) => setNewBooth({ ...newBooth, description: e.target.value })}
                     placeholder="Mô tả ngành hàng phù hợp, thiết bị đi kèm..."
-                    style={{ padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
                   />
                 </div>
               </div>

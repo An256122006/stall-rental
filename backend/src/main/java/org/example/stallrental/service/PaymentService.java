@@ -14,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentService {
     private final PaymentRepository paymentRepository;
+    private final org.example.stallrental.repository.ManagerRepository managerRepository;
 
     public List<Payment> getAll() {
         return paymentRepository.findAll();
@@ -22,6 +23,21 @@ public class PaymentService {
     public List<Payment> getAllForUser(UserPrincipal principal) {
         if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_CUSTOMER) {
             return paymentRepository.findByCustomerId(principal.getUser().getId());
+        }
+        if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_MANAGER) {
+            java.util.Optional<org.example.stallrental.model.entity.Manager> managerOpt = managerRepository.findByUserId(principal.getUser().getId());
+            if (managerOpt.isPresent()) {
+                org.example.stallrental.model.entity.Area managedArea = managerOpt.get().getArea();
+                if (managedArea != null) {
+                    return paymentRepository.findAll().stream()
+                            .filter(p -> p.getContract() != null && p.getContract().getBooking() != null &&
+                                    p.getContract().getBooking().getBooth() != null &&
+                                    p.getContract().getBooking().getBooth().getArea().getId().equals(managedArea.getId()))
+                            .toList();
+                } else {
+                    return java.util.Collections.emptyList();
+                }
+            }
         }
         return paymentRepository.findAll();
     }

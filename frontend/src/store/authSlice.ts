@@ -8,11 +8,28 @@ interface AuthState {
   error: string | null;
 }
 
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(decodedJson);
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
 const loadUserFromStorage = (): User | null => {
   try {
     const storedUser = localStorage.getItem('user');
     const accessToken = localStorage.getItem('accessToken');
     if (storedUser && accessToken) {
+      if (isTokenExpired(accessToken)) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        return null;
+      }
       return JSON.parse(storedUser);
     }
   } catch {
@@ -33,6 +50,7 @@ const handleAuthResponse = (data: AuthResponse): User => {
   localStorage.setItem('refreshToken', data.refreshToken);
 
   const userData: User = {
+    id: data.id,
     username: data.username,
     fullName: data.fullName,
     email: data.email,

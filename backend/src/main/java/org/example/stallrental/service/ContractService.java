@@ -24,6 +24,7 @@ public class ContractService {
     private final ContractRepository contractRepository;
     private final BoothRepository boothRepository;
     private final PaymentRepository paymentRepository;
+    private final org.example.stallrental.repository.ManagerRepository managerRepository;
 
     public List<Contract> getAll() {
         return contractRepository.findAll();
@@ -32,6 +33,20 @@ public class ContractService {
     public List<Contract> getAllForUser(UserPrincipal principal) {
         if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_CUSTOMER) {
             return contractRepository.findByCustomerId(principal.getUser().getId());
+        }
+        if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_MANAGER) {
+            java.util.Optional<org.example.stallrental.model.entity.Manager> managerOpt = managerRepository.findByUserId(principal.getUser().getId());
+            if (managerOpt.isPresent()) {
+                org.example.stallrental.model.entity.Area managedArea = managerOpt.get().getArea();
+                if (managedArea != null) {
+                    return contractRepository.findAll().stream()
+                            .filter(c -> c.getBooking() != null && c.getBooking().getBooth() != null &&
+                                    c.getBooking().getBooth().getArea().getId().equals(managedArea.getId()))
+                            .toList();
+                } else {
+                    return java.util.Collections.emptyList();
+                }
+            }
         }
         return contractRepository.findAll();
     }
@@ -89,14 +104,35 @@ public class ContractService {
                     paymentRepository.save(rentPayment);
                 }
             }
+        } else if (saved.getStatus() == ContractStatus.TERMINATED || saved.getStatus() == ContractStatus.EXPIRED) {
+            // Free the booth
+            Booking booking = saved.getBooking();
+            if (booking != null && booking.getBooth() != null) {
+                Booth booth = booking.getBooth();
+                booth.setStatus(BoothStatus.AVAILABLE);
+                boothRepository.save(booth);
+            }
         }
         return saved;
     }
 
     @Transactional
-    public Contract updateStatus(Long id, ContractStatus status) {
+    public Contract updateStatus(Long id, ContractStatus status, UserPrincipal principal) {
+        if (status == ContractStatus.ACTIVE || status == ContractStatus.TERMINATED) {
+            if (principal.getUser().getRole() != org.example.stallrental.model.enumType.Role.ROLE_ADMIN) {
+                throw new RuntimeException("Chỉ Admin mới có quyền kích hoạt hoặc thanh lý hợp đồng!");
+            }
+        }
         Contract contract = getById(id);
         contract.setStatus(status);
+        if (status == ContractStatus.TERMINATED || status == ContractStatus.EXPIRED) {
+            Booking booking = contract.getBooking();
+            if (booking != null && booking.getBooth() != null) {
+                Booth booth = booking.getBooth();
+                booth.setStatus(BoothStatus.AVAILABLE);
+                boothRepository.save(booth);
+            }
+        }
         return save(contract);
     }
 

@@ -16,8 +16,8 @@ public class AreaController {
     private final AreaService areaService;
 
     @GetMapping
-    public ResponseEntity<List<Area>> getAll() {
-        return ResponseEntity.ok(areaService.getAll());
+    public ResponseEntity<List<Area>> getAll(@org.springframework.security.core.annotation.AuthenticationPrincipal org.example.stallrental.security.principal.UserPrincipal principal) {
+        return ResponseEntity.ok(areaService.getAllForUser(principal));
     }
 
     @GetMapping("/{id}")

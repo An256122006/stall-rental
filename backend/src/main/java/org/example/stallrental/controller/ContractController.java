@@ -40,8 +40,8 @@ public class ContractController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Contract> updateStatus(@PathVariable Long id, @RequestParam ContractStatus status) {
-        return ResponseEntity.ok(contractService.updateStatus(id, status));
+    public ResponseEntity<Contract> updateStatus(@PathVariable Long id, @RequestParam ContractStatus status, @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(contractService.updateStatus(id, status, principal));
     }
 
     @DeleteMapping("/{id}")

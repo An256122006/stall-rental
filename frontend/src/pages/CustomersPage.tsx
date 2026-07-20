@@ -2,8 +2,18 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { customerApi } from '../api/rentalApi';
 import type { User } from '../types';
+import { useAppSelector } from '../store/store';
+
+const maskSensitiveInfo = (val?: string) => {
+  if (!val) return '—';
+  if (val.length <= 6) return '••••••';
+  return val.slice(0, 3) + '••••••' + val.slice(-3);
+};
 
 export default function CustomersPage() {
+  const user = useAppSelector((state) => state.auth.user);
+  const isAdmin = user?.role === 'ROLE_ADMIN';
+
   const [customers, setCustomers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -155,12 +165,14 @@ export default function CustomersPage() {
 
   return (
     <div className="customers-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>Quản lý Khách thuê</h2>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>Lưu trữ thông tin liên hệ, tài khoản đăng nhập và thông tin doanh nghiệp của khách thuê.</p>
+          <h2 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>Quản lý Khách thuê</h2>
+          <p style={{ color: 'var(--color-slate-600)', fontSize: '14.5px', marginTop: '4px', fontWeight: 500 }}>Lưu trữ thông tin liên hệ, tài khoản đăng nhập, và thông tin doanh nghiệp của khách thuê.</p>
         </div>
-        <button className="btn primary" onClick={() => setShowModal(true)}>+ Thêm khách thuê</button>
+        {isAdmin && (
+          <button className="btn primary" onClick={() => setShowModal(true)}>+ Thêm khách thuê</button>
+        )}
       </div>
 
       <div className="section-card">
@@ -175,27 +187,29 @@ export default function CustomersPage() {
                 <th>Mã số thuế</th>
                 <th>CCCD / GPKD</th>
                 <th>Địa chỉ</th>
-                <th>Hành động</th>
+                {isAdmin && <th>Hành động</th>}
               </tr>
             </thead>
             <tbody>
               {customers.map(c => (
                 <tr key={c.id}>
                   <td><strong>{c.fullName}</strong></td>
-                  <td><code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{c.username}</code></td>
+                  <td><code style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>{c.username}</code></td>
                   <td>{c.phone || '—'}</td>
                   <td>{c.email || 'Chưa cung cấp'}</td>
-                  <td>{c.taxCode || '—'}</td>
-                  <td>{c.identityNumber || '—'}</td>
+                  <td>{maskSensitiveInfo(c.taxCode)}</td>
+                  <td>{maskSensitiveInfo(c.identityNumber)}</td>
                   <td>{c.address || '—'}</td>
-                  <td>
-                    <button className="text-btn" style={{ color: '#ef4444' }} onClick={() => c.id && handleDelete(c.id)}>Xóa</button>
-                  </td>
+                  {isAdmin && (
+                    <td>
+                      <button className="text-btn" style={{ color: 'var(--color-danger)' }} onClick={() => c.id && handleDelete(c.id)}>Xóa</button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {customers.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', color: '#94a3b8' }}>Chưa có khách thuê nào trong danh mục.</td>
+                  <td colSpan={isAdmin ? 8 : 7} style={{ textAlign: 'center', color: '#94a3b8' }}>Chưa có khách thuê nào trong danh mục.</td>
                 </tr>
               )}
             </tbody>

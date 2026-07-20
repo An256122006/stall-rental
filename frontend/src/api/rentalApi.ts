@@ -11,7 +11,10 @@ import type {
   PaymentMethod,
   MaintenanceRequest,
   MaintenanceStatus,
-  Notification
+  Notification,
+  Manager,
+  ChatMessage,
+  CallSession
 } from '../types';
 
 export const areaApi = {
@@ -90,4 +93,31 @@ export const notificationApi = {
   create: (data: Notification) => axiosClient.post<Notification>('/api/notifications', data),
   markAsRead: (id: number) => axiosClient.patch<Notification>(`/api/notifications/${id}/read`),
   delete: (id: number) => axiosClient.delete<void>(`/api/notifications/${id}`)
+};
+
+export const managerApi = {
+  getAll: () => axiosClient.get<Manager[]>('/api/managers'),
+  getById: (id: number) => axiosClient.get<Manager>(`/api/managers/${id}`),
+  getMe: () => axiosClient.get<Manager>('/api/managers/me'),
+  create: (data: any) => axiosClient.post<Manager>('/api/managers', data),
+  update: (id: number, data: any) => axiosClient.put<Manager>(`/api/managers/${id}`, data),
+  delete: (id: number) => axiosClient.delete<void>(`/api/managers/${id}`)
+};
+
+export const messageApi = {
+  getContacts: () => axiosClient.get<User[]>('/api/messages/contacts'),
+  getHistory: (contactId: number) => axiosClient.get<ChatMessage[]>(`/api/messages?contactId=${contactId}`),
+  sendMessage: (receiverId: number, content: string) => axiosClient.post<ChatMessage>('/api/messages', { receiverId, content })
+};
+
+export const callApi = {
+  getActive: () => axiosClient.get<CallSession>('/api/calls/active'),
+  start: (receiverId: number, type: 'VOICE' | 'VIDEO') => axiosClient.post<CallSession>(`/api/calls/start?receiverId=${receiverId}&type=${type}`),
+  accept: (id: number) => axiosClient.post<CallSession>(`/api/calls/${id}/accept`),
+  reject: (id: number) => axiosClient.post<CallSession>(`/api/calls/${id}/reject`),
+  end: (id: number) => axiosClient.post<CallSession>(`/api/calls/${id}/end`)
+};
+
+export const aiApi = {
+  chat: (message: string) => axiosClient.post<{ response: string }>('/api/ai/chat', { message })
 };

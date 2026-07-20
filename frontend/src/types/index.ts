@@ -19,7 +19,33 @@ export interface AuthResponse {
   fullName: string;
   email: string;
   role: string;
+  id?: number;
 }
+
+export interface Manager {
+  id?: number;
+  user: User;
+  area?: Area;
+}
+
+export interface ChatMessage {
+  id?: number;
+  sender: User;
+  receiver: User;
+  content: string;
+  timestamp: string;
+}
+
+export interface CallSession {
+  id?: number;
+  caller: User;
+  receiver: User;
+  type: 'VOICE' | 'VIDEO';
+  status: 'RINGING' | 'CONNECTED' | 'REJECTED' | 'ENDED';
+  createdAt?: string;
+  connectedAt?: string;
+}
+
 
 export interface RefreshTokenRequest {
   refreshToken: string;

@@ -12,9 +12,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BoothService {
     private final BoothRepository boothRepository;
+    private final org.example.stallrental.repository.ManagerRepository managerRepository;
 
     public List<Booth> getAll() {
         return boothRepository.findAll();
+    }
+
+    public List<Booth> getAllForUser(org.example.stallrental.security.principal.UserPrincipal principal) {
+        if (principal != null && principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_MANAGER) {
+            java.util.Optional<org.example.stallrental.model.entity.Manager> managerOpt = managerRepository.findByUserId(principal.getUser().getId());
+            if (managerOpt.isPresent()) {
+                org.example.stallrental.model.entity.Area managedArea = managerOpt.get().getArea();
+                if (managedArea != null) {
+                    return boothRepository.findByAreaId(managedArea.getId());
+                } else {
+                    return java.util.Collections.emptyList();
+                }
+            }
+        }
+        return getAll();
     }
 
     public Booth getById(Long id) {

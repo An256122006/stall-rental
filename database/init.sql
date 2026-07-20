@@ -137,8 +137,46 @@ INSERT INTO `booth` (`code`, `name`, `area_id`, `size`, `rent_price`, `service_f
 ('GH-D05', 'Xe đồ nướng Xiên que', 4, 8.0, 4000000.00, 200000.00, 'AVAILABLE', NULL, 'Khu phố đi bộ ngoài trời.')
 ON DUPLICATE KEY UPDATE `rent_price`=VALUES(`rent_price`), `service_fee`=VALUES(`service_fee`);
 
--- Seed default Users (password is admin123 and customer123)
+-- Table structure for table `manager`
+CREATE TABLE IF NOT EXISTS `manager` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL UNIQUE,
+  `area_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_manager_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_manager_area` FOREIGN KEY (`area_id`) REFERENCES `area` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `chat_message`
+CREATE TABLE IF NOT EXISTS `chat_message` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `sender_id` bigint NOT NULL,
+  `receiver_id` bigint NOT NULL,
+  `content` text NOT NULL,
+  `timestamp` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_chat_message_sender` FOREIGN KEY (`sender_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_chat_message_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Seed default Users (password is admin123, customer123, manager123)
 INSERT INTO `user` (`id`, `username`, `password`, `email`, `full_name`, `phone`, `address`, `tax_code`, `identity_number`, `role`, `status`) VALUES
 (1, 'admin', '$2a$10$3z.OcrH/sA3q9.29J.D6qOuFomF2X.Lym.313yX1tP3.e.oD5Gf.e', 'admin@stallrental.com', 'Ban Quản Lý Trung Tâm', '0988888888', 'Trung tâm Thương mại Stall Rental', '0102030405', '079090000001', 'ROLE_ADMIN', b'1'),
-(2, 'customer', '$2a$10$w09aVn6Z5Y2c.C4GomF2XOlm31yX1tP3.e.oD5Gf.e234yX1tP3.e', 'customer@gmail.com', 'Nguyễn Văn A - Thời trang Converse', '0912345678', '123 Đường Lê Lợi, Quận 1, TP. HCM', '0102030405', '079090123456', 'ROLE_CUSTOMER', b'1')
+(2, 'customer', '$2a$10$w09aVn6Z5Y2c.C4GomF2XOlm31yX1tP3.e.oD5Gf.e234yX1tP3.e', 'customer@gmail.com', 'Nguyễn Văn A - Thời trang Converse', '0912345678', '123 Đường Lê Lợi, Quận 1, TP. HCM', '0102030405', '079090123456', 'ROLE_CUSTOMER', b'1'),
+(3, 'manager', '$2a$10$0h.y.4mD2jF74qB0t03RCu2y7pL.K3Q0G81lqH4b1tH0iL3hLpMvG', 'manager@stallrental.com', 'Nguyễn Văn Quản Lý', '0977777777', 'Khu A - Tầng Trệt', '0102030405', '079090111111', 'ROLE_MANAGER', b'1')
 ON DUPLICATE KEY UPDATE `password`=VALUES(`password`), `full_name`=VALUES(`full_name`), `address`=VALUES(`address`);
+
+-- Seed Manager
+INSERT INTO `manager` (`id`, `user_id`, `area_id`) VALUES
+(1, 3, 1)
+ON DUPLICATE KEY UPDATE `user_id`=VALUES(`user_id`), `area_id`=VALUES(`area_id`);
+
+-- Seed Booking & Contract for customer in Area 1 (booth 1 - GH-A01)
+INSERT INTO `booking` (`id`, `user_id`, `booth_id`, `booking_date`, `start_date`, `end_date`, `deposit`, `total_price`, `status`, `note`) VALUES
+(1, 2, 1, CURDATE(), DATE_SUB(CURDATE(), INTERVAL 5 DAY), DATE_ADD(CURDATE(), INTERVAL 6 MONTH), 1000000.00, 8000000.00, 'CONFIRMED', 'Seeded booking')
+ON DUPLICATE KEY UPDATE `user_id`=VALUES(`user_id`), `booth_id`=VALUES(`booth_id`);
+
+INSERT INTO `contract` (`id`, `contract_code`, `booking_id`, `start_date`, `end_date`, `rent_price`, `deposit`, `status`, `contract_file`) VALUES
+(1, 'HD-A01-0001', 1, DATE_SUB(CURDATE(), INTERVAL 5 DAY), DATE_ADD(CURDATE(), INTERVAL 6 MONTH), 8000000.00, 1000000.00, 'ACTIVE', NULL)
+ON DUPLICATE KEY UPDATE `contract_code`=VALUES(`contract_code`), `booking_id`=VALUES(`booking_id`);
+

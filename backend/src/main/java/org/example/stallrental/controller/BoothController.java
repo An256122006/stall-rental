@@ -16,8 +16,8 @@ public class BoothController {
     private final BoothService boothService;
 
     @GetMapping
-    public ResponseEntity<List<Booth>> getAll() {
-        return ResponseEntity.ok(boothService.getAll());
+    public ResponseEntity<List<Booth>> getAll(@org.springframework.security.core.annotation.AuthenticationPrincipal org.example.stallrental.security.principal.UserPrincipal principal) {
+        return ResponseEntity.ok(boothService.getAllForUser(principal));
     }
 
     @GetMapping("/{id}")

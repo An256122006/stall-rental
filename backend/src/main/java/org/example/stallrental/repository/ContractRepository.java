@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.example.stallrental.model.enumType.ContractStatus;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +18,6 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
 
     @Query("SELECT c FROM Contract c WHERE c.booking.customer.id = :customerId")
     List<Contract> findByCustomerId(@Param("customerId") Long customerId);
+
+    List<Contract> findByStatusAndEndDateBefore(ContractStatus status, LocalDate date);
 }

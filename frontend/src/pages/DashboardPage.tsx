@@ -101,57 +101,57 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-content-page">
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
-          {isCustomer ? `Xin chào, ${user?.fullName || 'Khách thuê'}` : 'Tổng quan quản lý'}
+      <div style={{ marginBottom: '32px' }}>
+        <h2 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>
+          {isCustomer ? `Xin chào, ${user?.fullName || 'Khách thuê'}` : 'Tổng quan hệ thống'}
         </h2>
-        <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+        <p style={{ color: 'var(--color-slate-600)', fontSize: '14.5px', marginTop: '4px', fontWeight: 500 }}>
           {isCustomer 
             ? 'Theo dõi hợp đồng, hóa đơn và yêu cầu hỗ trợ kỹ thuật của bạn.' 
-            : 'Số liệu tổng quan hoạt động kinh doanh, thuê mặt bằng.'}
+            : 'Số liệu tổng quan hoạt động kinh doanh và hiệu suất thuê mặt bằng.'}
         </p>
       </div>
 
       <div className="metrics-grid">
         {/* Metric 1 */}
-        <div className="metric-card" style={{ borderLeft: '4px solid #10b981' }}>
+        <div className="metric-card" style={{ borderLeft: '4px solid var(--color-success)' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Gian hàng đang thuê' : 'Tỷ lệ lấp đầy'}</h3>
             <div className="value">{isCustomer ? myRentedBooths.length : `${occupancyRate}%`}</div>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--color-slate-600)', marginTop: '6px', fontWeight: 500 }}>
               {isCustomer ? 'Gian hàng có hợp đồng hiệu lực' : `${rentedBooths} Đang thuê / ${totalBooths} Tổng số`}
             </p>
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div className="metric-card" style={{ borderLeft: '4px solid #3b82f6' }}>
+        <div className="metric-card" style={{ borderLeft: '4px solid var(--color-primary)' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Đã thanh toán' : 'Doanh thu thực tế'}</h3>
-            <div className="value" style={{ fontSize: '22px' }}>{formatCurrency(totalRevenue)}</div>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+            <div className="value" style={{ fontSize: '24px' }}>{formatCurrency(totalRevenue)}</div>
+            <p style={{ fontSize: '12px', color: 'var(--color-slate-600)', marginTop: '6px', fontWeight: 500 }}>
               {isCustomer ? 'Tổng các khoản đã chi trả' : 'Tổng thu từ các phiếu thanh toán'}
             </p>
           </div>
         </div>
 
         {/* Metric 3 */}
-        <div className="metric-card" style={{ borderLeft: '4px solid #ef4444' }}>
+        <div className="metric-card" style={{ borderLeft: '4px solid var(--color-danger)' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Số tiền cần đóng' : 'Công nợ chờ thu'}</h3>
-            <div className="value" style={{ fontSize: '22px', color: '#ef4444' }}>{formatCurrency(pendingDebt)}</div>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+            <div className="value" style={{ fontSize: '24px', color: 'var(--color-danger)' }}>{formatCurrency(pendingDebt)}</div>
+            <p style={{ fontSize: '12px', color: 'var(--color-slate-600)', marginTop: '6px', fontWeight: 500 }}>
               {isCustomer ? 'Vui lòng thanh toán đúng hạn' : 'Khoản nợ chưa thanh toán'}
             </p>
           </div>
         </div>
 
         {/* Metric 4 */}
-        <div className="metric-card" style={{ borderLeft: '4px solid #d946ef' }}>
+        <div className="metric-card" style={{ borderLeft: '4px solid #EC4899' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Hợp đồng sở hữu' : 'Hợp đồng hiệu lực'}</h3>
             <div className="value">{isCustomer ? contracts.length : activeContractsCount}</div>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--color-slate-600)', marginTop: '6px', fontWeight: 500 }}>
               {isCustomer ? 'Tổng số hợp đồng đã lập' : 'Hợp đồng đang hoạt động'}
             </p>
           </div>
@@ -172,6 +172,7 @@ export default function DashboardPage() {
                   <th>Diện tích</th>
                   <th>{isCustomer ? 'Giá thuê thực tế' : 'Giá thuê mặc định'}</th>
                   <th>Trạng thái</th>
+                  {isCustomer && <th>Hành động</th>}
                 </tr>
               </thead>
               <tbody>
@@ -184,6 +185,15 @@ export default function DashboardPage() {
                       <td>{c.booking.booth.size} m²</td>
                       <td>{formatCurrency(c.rentPrice)}/tháng</td>
                       <td><span className="badge success">Đang thuê</span></td>
+                      <td>
+                        {c.contractFile ? (
+                          <a href={c.contractFile} target="_blank" rel="noopener noreferrer" className="text-btn" style={{ fontWeight: 600 }}>
+                            Xem hợp đồng
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--color-slate-400)', fontStyle: 'italic', fontSize: '13px' }}>Chưa đính kèm</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -201,7 +211,7 @@ export default function DashboardPage() {
                 {((isCustomer && contracts.filter(c => c.status === 'ACTIVE').length === 0) ||
                   (!isCustomer && booths.filter(b => b.status === 'AVAILABLE').length === 0)) && (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: '#94a3b8' }}>
+                    <td colSpan={isCustomer ? 7 : 6} style={{ textAlign: 'center', color: '#94a3b8' }}>
                       {isCustomer ? 'Bạn chưa có hợp đồng thuê gian hàng nào hiệu lực.' : 'Không có gian hàng trống nào khả dụng.'}
                     </td>
                   </tr>
@@ -214,31 +224,31 @@ export default function DashboardPage() {
         {/* Right column */}
         <div className="section-card">
           <h2>{isCustomer ? 'Trợ giúp kỹ thuật & Vận hành' : 'Trạng thái vận hành'}</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: '#64748b' }}>
+              <span style={{ fontSize: '14.5px', color: 'var(--color-slate-600)', fontWeight: 500 }}>
                 {isCustomer ? 'Phiếu hỗ trợ đang xử lý' : 'Yêu cầu vận hành tồn đọng'}
               </span>
-              <span className="badge warning" style={{ fontSize: '13px' }}>{pendingRequestsCount}</span>
+              <span className="badge warning">{pendingRequestsCount}</span>
             </div>
             {!isCustomer && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', color: '#64748b' }}>Gian hàng trống sẵn sàng</span>
-                  <span className="badge success" style={{ fontSize: '13px' }}>{availableBooths}</span>
+                  <span style={{ fontSize: '14.5px', color: 'var(--color-slate-600)', fontWeight: 500 }}>Gian hàng trống sẵn sàng</span>
+                  <span className="badge success">{availableBooths}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', color: '#64748b' }}>Gian hàng đang bảo trì</span>
-                  <span className="badge danger" style={{ fontSize: '13px' }}>{maintenanceBooths}</span>
+                  <span style={{ fontSize: '14.5px', color: 'var(--color-slate-600)', fontWeight: 500 }}>Gian hàng đang bảo trì</span>
+                  <span className="badge danger">{maintenanceBooths}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', color: '#64748b' }}>Tổng số gian hàng</span>
-                  <span className="badge info" style={{ fontSize: '13px' }}>{totalBooths}</span>
+                  <span style={{ fontSize: '14.5px', color: 'var(--color-slate-600)', fontWeight: 500 }}>Tổng số gian hàng</span>
+                  <span className="badge info">{totalBooths}</span>
                 </div>
               </>
             )}
             {isCustomer && (
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
+              <div style={{ background: 'rgba(124, 58, 237, 0.04)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-slate-300)', fontSize: '13px', color: 'var(--color-slate-700)', lineHeight: '1.6' }}>
                 💡 Nếu gian hàng của bạn gặp sự cố kỹ thuật (điện, nước, cơ sở vật chất), vui lòng chuyển qua tab <strong>Yêu cầu hỗ trợ</strong> để gửi phiếu báo sửa chữa cho Ban quản lý.
               </div>
             )}

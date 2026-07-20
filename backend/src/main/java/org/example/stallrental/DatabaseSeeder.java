@@ -1,19 +1,15 @@
 package org.example.stallrental;
 
 import lombok.RequiredArgsConstructor;
-import org.example.stallrental.model.entity.Area;
-import org.example.stallrental.model.entity.Booth;
-import org.example.stallrental.model.entity.User;
-import org.example.stallrental.model.enumType.BoothStatus;
-import org.example.stallrental.model.enumType.Role;
-import org.example.stallrental.repository.AreaRepository;
-import org.example.stallrental.repository.BoothRepository;
-import org.example.stallrental.repository.UserRepository;
+import org.example.stallrental.model.entity.*;
+import org.example.stallrental.model.enumType.*;
+import org.example.stallrental.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +20,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final AreaRepository areaRepository;
     private final BoothRepository boothRepository;
     private final UserRepository userRepository;
+    private final ManagerRepository managerRepository;
+    private final BookingRepository bookingRepository;
+    private final ContractRepository contractRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -114,6 +113,81 @@ public class DatabaseSeeder implements CommandLineRunner {
             customerUser.setStatus(true);
             customerUser.setCreatedAt(LocalDateTime.now());
             userRepository.save(customerUser);
+
+            // Seed Manager User
+            User managerUser = new User();
+            managerUser.setUsername("manager");
+            managerUser.setPassword(passwordEncoder.encode("manager123"));
+            managerUser.setEmail("manager@stallrental.com");
+            managerUser.setFullName("Nguyễn Văn Quản Lý");
+            managerUser.setPhone("0977777777");
+            managerUser.setAddress("Khu A - Tầng Trệt");
+            managerUser.setRole(Role.ROLE_MANAGER);
+            managerUser.setStatus(true);
+            managerUser.setCreatedAt(LocalDateTime.now());
+            userRepository.save(managerUser);
+
+            // Fetch Area 1 (Khu A)
+            List<Area> areas = areaRepository.findAll();
+            Area areaA = areas.stream().filter(a -> a.getName().contains("Khu A")).findFirst().orElse(null);
+
+            if (areaA != null) {
+                Manager manager = new Manager();
+                manager.setUser(managerUser);
+                manager.setArea(areaA);
+                managerRepository.save(manager);
+
+                // Fetch Booth GH-A01
+                List<Booth> booths = boothRepository.findAll();
+                Booth boothA01 = booths.stream().filter(b -> b.getCode().equals("GH-A01")).findFirst().orElse(null);
+
+                if (boothA01 != null && bookingRepository.count() == 0) {
+                    Booking booking = new Booking();
+                    booking.setCustomer(customerUser);
+                    booking.setBooth(boothA01);
+                    booking.setBookingDate(LocalDate.now());
+                    booking.setStartDate(LocalDate.now().minusDays(5));
+                    booking.setEndDate(LocalDate.now().plusMonths(6));
+                    booking.setDeposit(BigDecimal.valueOf(1000000));
+                    booking.setTotalPrice(BigDecimal.valueOf(8000000));
+                    booking.setStatus(BookingStatus.CONFIRMED);
+                    bookingRepository.save(booking);
+
+                    Contract contract = new Contract();
+                    contract.setContractCode("HD-A01-0001");
+                    contract.setBooking(booking);
+                    contract.setStartDate(booking.getStartDate());
+                    contract.setEndDate(booking.getEndDate());
+                    contract.setRentPrice(booking.getTotalPrice());
+                    contract.setDeposit(booking.getDeposit());
+                    contract.setStatus(ContractStatus.ACTIVE);
+                    contract.setCreatedAt(LocalDateTime.now());
+                    contractRepository.save(contract);
+                }
+            }
         }
+
+        // Fix local database inconsistencies for managers
+        userRepository.findByUsername("manager").ifPresent(managerUserObj -> {
+            if (managerUserObj.getRole() == Role.ROLE_MANAGER) {
+                if (managerRepository.findByUserId(managerUserObj.getId()).isEmpty()) {
+                    System.out.println("Self-Healing Database: Creating Manager record for user 'manager'...");
+                    Area areaA = areaRepository.findAll().stream()
+                            .filter(a -> a.getName().contains("Khu A"))
+                            .findFirst().orElse(null);
+                    if (areaA != null) {
+                        managerRepository.findByAreaId(areaA.getId()).ifPresent(m -> {
+                            System.out.println("Self-Healing: Removing mismatched manager: " + m.getUser().getUsername());
+                            managerRepository.delete(m);
+                        });
+
+                        Manager manager = new Manager();
+                        manager.setUser(managerUserObj);
+                        manager.setArea(areaA);
+                        managerRepository.save(manager);
+                    }
+                }
+            }
+        });
     }
 }

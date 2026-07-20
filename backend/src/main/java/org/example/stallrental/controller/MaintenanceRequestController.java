@@ -39,13 +39,19 @@ public class MaintenanceRequestController {
     }
 
     @PostMapping
-    public ResponseEntity<MaintenanceRequest> create(@RequestBody MaintenanceRequest request) {
+    public ResponseEntity<MaintenanceRequest> create(@RequestBody MaintenanceRequest request, @AuthenticationPrincipal UserPrincipal principal) {
+        if (request.getCustomer() == null && principal != null) {
+            request.setCustomer(principal.getUser());
+        }
         return ResponseEntity.ok(requestService.save(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MaintenanceRequest> update(@PathVariable Long id, @RequestBody MaintenanceRequest request) {
+    public ResponseEntity<MaintenanceRequest> update(@PathVariable Long id, @RequestBody MaintenanceRequest request, @AuthenticationPrincipal UserPrincipal principal) {
         request.setId(id);
+        if (request.getCustomer() == null && principal != null) {
+            request.setCustomer(principal.getUser());
+        }
         return ResponseEntity.ok(requestService.save(request));
     }
 

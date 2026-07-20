@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { useAppSelector } from '../store/store';
-import { paymentApi } from '../api/rentalApi';
+import { paymentApi, notificationApi } from '../api/rentalApi';
 import type { Payment, PaymentMethod } from '../types';
 
 export default function PaymentsPage() {
@@ -61,6 +61,45 @@ export default function PaymentsPage() {
         confirmButtonColor: '#0f172a'
       });
     }
+  };
+
+  const handleRemind = async (payment: Payment) => {
+    Swal.fire({
+      title: 'Gửi nhắc nhở thanh toán?',
+      text: `Gửi thông báo nhắc nhở thanh toán khoản tiền ${formatCurrency(payment.amount)} cho khách thuê ${payment.contract.booking.customer.fullName}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#f59e0b',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Gửi nhắc nhở',
+      cancelButtonText: 'Hủy'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await notificationApi.create({
+            user: payment.contract.booking.customer,
+            title: 'Nhắc nhở thanh toán công nợ',
+            content: `Kính gửi quý khách, vui lòng hoàn tất thanh toán khoản tiền ${formatCurrency(payment.amount)} cho hợp đồng ${payment.contract.contractCode} (Gian hàng ${payment.contract.booking.booth.code}).`,
+            isRead: false,
+            createdAt: new Date().toISOString()
+          });
+          
+          Swal.fire({
+            title: 'Thành công',
+            text: 'Đã gửi thông báo nhắc nhở thanh toán đến khách hàng!',
+            icon: 'success',
+            confirmButtonColor: '#0f172a'
+          });
+        } catch (err) {
+          Swal.fire({
+            title: 'Lỗi',
+            text: 'Không thể gửi thông báo nhắc nhở: ' + err,
+            icon: 'error',
+            confirmButtonColor: '#0f172a'
+          });
+        }
+      }
+    });
   };
 
   const formatCurrency = (val: number) => {
@@ -133,12 +172,12 @@ export default function PaymentsPage() {
 
   return (
     <div className="payments-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
+          <h2 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>
             {isCustomer ? 'Thanh toán & Hóa đơn' : 'Tài chính & Quản lý công nợ'}
           </h2>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+          <p style={{ color: 'var(--color-slate-600)', fontSize: '14.5px', marginTop: '4px', fontWeight: 500 }}>
             {isCustomer ? 'Danh sách hóa đơn tiền thuê, tiền cọc và lịch sử các khoản thanh toán của bạn.' : 'Đối soát lịch thu tiền cọc, tiền thuê theo kỳ, thu các khoản phí dịch vụ và phát sinh.'}
           </p>
         </div>
@@ -146,33 +185,24 @@ export default function PaymentsPage() {
 
       {/* Financial Overview Cards */}
       <div className="metrics-grid">
-        <div className="metric-card">
+        <div className="metric-card" style={{ borderLeft: '4px solid #EC4899' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Tổng tiền thuê dự kiến' : 'Tổng phải thu đã ghi nhận'}</h3>
             <div className="value">{formatCurrency(collectedAmount + pendingAmount)}</div>
           </div>
-          <div className="metric-icon" style={{ backgroundColor: '#f8fafc', color: '#64748b' }}>
-            📊
-          </div>
         </div>
 
-        <div className="metric-card">
+        <div className="metric-card" style={{ borderLeft: '4px solid var(--color-success)' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Tổng tiền đã thanh toán' : 'Tổng thu thực tế (Đã thanh toán)'}</h3>
-            <div className="value" style={{ color: '#10b981' }}>{formatCurrency(collectedAmount)}</div>
-          </div>
-          <div className="metric-icon" style={{ backgroundColor: '#ecfdf5', color: '#10b981' }}>
-            ✓
+            <div className="value" style={{ color: 'var(--color-success)' }}>{formatCurrency(collectedAmount)}</div>
           </div>
         </div>
 
-        <div className="metric-card">
+        <div className="metric-card" style={{ borderLeft: '4px solid var(--color-danger)' }}>
           <div className="metric-details">
             <h3>{isCustomer ? 'Số tiền chưa thanh toán' : 'Công nợ còn tồn (Chưa thanh toán)'}</h3>
-            <div className="value" style={{ color: '#ef4444' }}>{formatCurrency(pendingAmount)}</div>
-          </div>
-          <div className="metric-icon" style={{ backgroundColor: '#fef2f2', color: '#ef4444' }}>
-            !
+            <div className="value" style={{ color: 'var(--color-danger)' }}>{formatCurrency(pendingAmount)}</div>
           </div>
         </div>
       </div>
@@ -180,7 +210,7 @@ export default function PaymentsPage() {
       {/* Payments List */}
       <div className="section-card">
         <h2>{isCustomer ? 'Lịch thanh toán của tôi' : 'Lịch thanh toán và công nợ chi tiết'}</h2>
-        <div className="table-responsive" style={{ marginTop: '16px' }}>
+        <div className="table-responsive" style={{ marginTop: '24px' }}>
           <table className="app-table">
             <thead>
               <tr>
@@ -223,9 +253,15 @@ export default function PaymentsPage() {
                   </td>
                   <td>
                     {p.status !== 'PAID' && (
-                      <button className="btn primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleOpenPay(p)}>
-                        {isCustomer ? 'Thanh toán ngay' : 'Thu tiền'}
-                      </button>
+                      isCustomer ? (
+                        <button className="btn primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleOpenPay(p)}>
+                          Thanh toán ngay
+                        </button>
+                      ) : (
+                        <button className="btn warning" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleRemind(p)}>
+                          Nhắc nhở
+                        </button>
+                      )
                     )}
                   </td>
                 </tr>
@@ -251,15 +287,15 @@ export default function PaymentsPage() {
             </div>
             <form onSubmit={handleRecordPayment}>
               <div className="modal-body">
-                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-                  <p style={{ fontSize: '14px', color: '#475569', marginBottom: '6px' }}>
+                <div style={{ background: 'var(--color-primary-light)', padding: '16px 20px', borderRadius: 'var(--radius-md)', marginBottom: '24px', border: '1px solid var(--color-slate-200)' }}>
+                  <p style={{ fontSize: '14px', color: 'var(--color-slate-600)', marginBottom: '6px' }}>
                     Khách thuê: <strong>{selectedPayment.contract.booking.customer.fullName}</strong>
                   </p>
-                  <p style={{ fontSize: '14px', color: '#475569', marginBottom: '6px' }}>
+                  <p style={{ fontSize: '14px', color: 'var(--color-slate-600)', marginBottom: '6px' }}>
                     Hợp đồng: <strong>{selectedPayment.contract.contractCode}</strong> (Gian {selectedPayment.contract.booking.booth.code})
                   </p>
-                  <p style={{ fontSize: '16px', color: '#0f172a', fontWeight: '700' }}>
-                    Số tiền cần thu: <span style={{ color: '#10b981' }}>{formatCurrency(selectedPayment.amount)}</span>
+                  <p style={{ fontSize: '16.5px', color: 'var(--color-slate-900)', fontWeight: '800' }}>
+                    Số tiền cần thu: <span style={{ color: 'var(--color-success)' }}>{formatCurrency(selectedPayment.amount)}</span>
                   </p>
                 </div>
 
@@ -269,7 +305,6 @@ export default function PaymentsPage() {
                     required
                     value={payMethod}
                     onChange={(e) => setPayMethod(e.target.value as PaymentMethod)}
-                    style={{ padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
                   >
                     <option value="BANK_TRANSFER">Chuyển khoản Ngân hàng</option>
                     <option value="CASH">Tiền mặt</option>
@@ -285,7 +320,6 @@ export default function PaymentsPage() {
                     value={payNote}
                     onChange={(e) => setPayNote(e.target.value)}
                     placeholder="Mã tham chiếu ngân hàng, số hóa đơn, chứng từ đi kèm..."
-                    style={{ padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
                   />
                 </div>
               </div>

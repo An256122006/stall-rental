@@ -3,22 +3,15 @@ package org.example.stallrental.service;
 import lombok.RequiredArgsConstructor;
 import org.example.stallrental.model.entity.Booking;
 import org.example.stallrental.model.entity.Booth;
-import org.example.stallrental.model.entity.Contract;
-import org.example.stallrental.model.entity.Payment;
 import org.example.stallrental.model.enumType.BookingStatus;
 import org.example.stallrental.model.enumType.BoothStatus;
-import org.example.stallrental.model.enumType.ContractStatus;
-import org.example.stallrental.model.enumType.PaymentStatus;
 import org.example.stallrental.repository.BookingRepository;
 import org.example.stallrental.repository.BoothRepository;
-import org.example.stallrental.repository.ContractRepository;
-import org.example.stallrental.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.example.stallrental.security.principal.UserPrincipal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,8 +19,7 @@ import java.util.List;
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final BoothRepository boothRepository;
-    private final ContractRepository contractRepository;
-    private final PaymentRepository paymentRepository;
+    private final org.example.stallrental.repository.ManagerRepository managerRepository;
 
     public List<Booking> getAll() {
         return bookingRepository.findAll();
@@ -36,6 +28,20 @@ public class BookingService {
     public List<Booking> getAllForUser(UserPrincipal principal) {
         if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_CUSTOMER) {
             return bookingRepository.findByCustomerId(principal.getUser().getId());
+        }
+        if (principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_MANAGER) {
+            java.util.Optional<org.example.stallrental.model.entity.Manager> managerOpt = managerRepository.findByUserId(principal.getUser().getId());
+            if (managerOpt.isPresent()) {
+                org.example.stallrental.model.entity.Area managedArea = managerOpt.get().getArea();
+                if (managedArea != null) {
+                    return bookingRepository.findAll().stream()
+                            .filter(b -> b.getBooth() != null && b.getBooth().getArea() != null &&
+                                    b.getBooth().getArea().getId().equals(managedArea.getId()))
+                            .toList();
+                } else {
+                    return java.util.Collections.emptyList();
+                }
+            }
         }
         return bookingRepository.findAll();
     }
@@ -79,11 +85,7 @@ public class BookingService {
             boothRepository.save(booth);
         }
 
-        Booking savedBooking = bookingRepository.save(booking);
-        if (savedBooking.getStatus() == BookingStatus.CONFIRMED) {
-            createContractForBooking(savedBooking);
-        }
-        return savedBooking;
+        return bookingRepository.save(booking);
     }
 
     @Transactional
@@ -104,57 +106,7 @@ public class BookingService {
             boothRepository.save(booth);
         }
 
-        Booking savedBooking = bookingRepository.save(booking);
-        if (status == BookingStatus.CONFIRMED) {
-            createContractForBooking(savedBooking);
-        }
-        return savedBooking;
-    }
-
-    private void createContractForBooking(Booking booking) {
-        if (contractRepository.findByBookingId(booking.getId()).isPresent()) {
-            return;
-        }
-
-        Contract contract = new Contract();
-        contract.setBooking(booking);
-        contract.setContractCode("HD-" + System.currentTimeMillis());
-        contract.setStartDate(booking.getStartDate());
-        contract.setEndDate(booking.getEndDate());
-        contract.setRentPrice(booking.getBooth().getRentPrice());
-        contract.setDeposit(booking.getDeposit());
-        contract.setStatus(ContractStatus.ACTIVE);
-        contract.setCreatedAt(LocalDateTime.now());
-        
-        Contract saved = contractRepository.save(contract);
-
-        // Update booth status to RENTED
-        Booth booth = booking.getBooth();
-        booth.setStatus(BoothStatus.RENTED);
-        boothRepository.save(booth);
-
-        // Create initial payments
-        // Deposit payment
-        if (saved.getDeposit() != null && saved.getDeposit().compareTo(java.math.BigDecimal.ZERO) > 0) {
-            Payment depositPayment = new Payment();
-            depositPayment.setContract(saved);
-            depositPayment.setAmount(saved.getDeposit());
-            depositPayment.setPaymentDate(saved.getStartDate());
-            depositPayment.setStatus(PaymentStatus.UNPAID);
-            depositPayment.setNote("Tiền đặt cọc hợp đồng " + saved.getContractCode());
-            paymentRepository.save(depositPayment);
-        }
-
-        // Rent payment
-        if (saved.getRentPrice() != null && saved.getRentPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
-            Payment rentPayment = new Payment();
-            rentPayment.setContract(saved);
-            rentPayment.setAmount(saved.getRentPrice());
-            rentPayment.setPaymentDate(saved.getStartDate());
-            rentPayment.setStatus(PaymentStatus.UNPAID);
-            rentPayment.setNote("Tiền thuê kỳ 1 hợp đồng " + saved.getContractCode());
-            paymentRepository.save(rentPayment);
-        }
+        return bookingRepository.save(booking);
     }
 
     @Transactional

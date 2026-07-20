@@ -11,9 +11,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AreaService {
     private final AreaRepository areaRepository;
+    private final org.example.stallrental.repository.ManagerRepository managerRepository;
 
     public List<Area> getAll() {
         return areaRepository.findAll();
+    }
+
+    public List<Area> getAllForUser(org.example.stallrental.security.principal.UserPrincipal principal) {
+        if (principal != null && principal.getUser().getRole() == org.example.stallrental.model.enumType.Role.ROLE_MANAGER) {
+            java.util.Optional<org.example.stallrental.model.entity.Manager> managerOpt = managerRepository.findByUserId(principal.getUser().getId());
+            if (managerOpt.isPresent()) {
+                org.example.stallrental.model.entity.Area managedArea = managerOpt.get().getArea();
+                if (managedArea != null) {
+                    return List.of(managedArea);
+                } else {
+                    return java.util.Collections.emptyList();
+                }
+            }
+        }
+        return getAll();
     }
 
     public Area getById(Long id) {

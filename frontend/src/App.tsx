@@ -5,11 +5,14 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import BoothsPage from './pages/BoothsPage';
 import CustomersPage from './pages/CustomersPage';
+import ManagersPage from './pages/ManagersPage';
 import BookingsPage from './pages/BookingsPage';
 import ContractsPage from './pages/ContractsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import ChatCustomersPage from './pages/ChatCustomersPage';
+import ChatAdminPage from './pages/ChatAdminPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import './App.css';
@@ -52,9 +55,33 @@ function App() {
           }
         />
         <Route
+          path="/managers"
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+              <Layout><ManagersPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat-customers"
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_OPERATOR']}>
+              <Layout><ChatCustomersPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat-admin"
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_CUSTOMER']}>
+              <Layout><ChatAdminPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/bookings"
           element={
-            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF', 'ROLE_OPERATOR', 'ROLE_CUSTOMER']}>
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_CUSTOMER']}>
               <Layout><BookingsPage /></Layout>
             </ProtectedRoute>
           }
@@ -62,7 +89,7 @@ function App() {
         <Route
           path="/contracts"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_CUSTOMER']}>
               <Layout><ContractsPage /></Layout>
             </ProtectedRoute>
           }
@@ -70,7 +97,7 @@ function App() {
         <Route
           path="/payments"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_CUSTOMER']}>
               <Layout><PaymentsPage /></Layout>
             </ProtectedRoute>
           }
@@ -78,7 +105,7 @@ function App() {
         <Route
           path="/maintenance"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_CUSTOMER']}>
               <Layout><MaintenancePage /></Layout>
             </ProtectedRoute>
           }

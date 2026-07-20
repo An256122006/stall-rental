@@ -251,12 +251,12 @@ export default function BookingsPage() {
 
   return (
     <div className="bookings-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
+          <h2 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>
             {isCustomer ? 'Đặt chỗ của tôi' : 'Giữ chỗ & Báo giá'}
           </h2>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+          <p style={{ color: 'var(--color-slate-600)', fontSize: '14.5px', marginTop: '4px', fontWeight: 500 }}>
             {isCustomer ? 'Gửi yêu cầu đăng ký giữ chỗ gian hàng trống và theo dõi báo giá tiền cọc dự toán.' : 'Ghi nhận thông tin báo giá thuê gian hàng và giữ chỗ tạm thời cho khách hàng.'}
           </p>
         </div>
@@ -310,7 +310,7 @@ export default function BookingsPage() {
                         <button className="text-btn" onClick={() => b.id && handleConfirm(b.id)}>Duyệt</button>
                       )}
                       {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && (
-                        <button className="text-btn" style={{ color: '#ef4444' }} onClick={() => b.id && handleCancel(b.id)}>Hủy</button>
+                        <button className="text-btn" style={{ color: 'var(--color-danger)' }} onClick={() => b.id && handleCancel(b.id)}>Hủy</button>
                       )}
                     </div>
                   </td>
@@ -385,34 +385,34 @@ export default function BookingsPage() {
                     
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
                       gap: '10px',
                       marginTop: '8px',
                       maxHeight: '190px',
                       overflowY: 'auto',
-                      padding: '4px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      background: '#f8fafc'
+                      padding: '8px',
+                      border: '1px solid #E9D5FF',
+                      borderRadius: 'var(--radius-sm)',
+                      background: '#FAF5FF'
                     }}>
                       {booths.filter(b => b.area.id === Number(modalAreaId)).map(b => {
                         const isAvailable = b.status === 'AVAILABLE';
                         const isSelected = String(b.id) === newBooking.boothId;
                         
-                        let cardBg = '#f1f5f9'; 
-                        let cardColor = '#334155';
-                        let cardBorder = '1px solid #cbd5e1';
+                        let cardBg = '#FFFFFF'; 
+                        let cardColor = 'var(--color-slate-900)';
+                        let cardBorder = '1px solid #E9D5FF';
                         let cursor = 'pointer';
-
+ 
                         if (!isAvailable) {
-                          cardBg = '#fee2e2'; 
-                          cardColor = '#991b1b'; 
-                          cardBorder = '1px solid #fca5a5';
+                          cardBg = 'var(--color-danger-bg)'; 
+                          cardColor = 'var(--color-danger)'; 
+                          cardBorder = '1px solid var(--color-danger-border)';
                           cursor = 'not-allowed';
                         } else if (isSelected) {
-                          cardBg = '#dcfce7'; 
-                          cardColor = '#166534'; 
-                          cardBorder = '2px solid #22c55e';
+                          cardBg = 'var(--color-success-bg)'; 
+                          cardColor = 'var(--color-success)'; 
+                          cardBorder = '2px solid var(--color-success-border)';
                         }
 
                         return (
@@ -427,7 +427,7 @@ export default function BookingsPage() {
                               background: cardBg,
                               color: cardColor,
                               border: cardBorder,
-                              borderRadius: '6px',
+                              borderRadius: 'var(--radius-sm)',
                               padding: '10px 6px',
                               textAlign: 'center',
                               cursor: cursor,

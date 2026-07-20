@@ -26,7 +26,7 @@ public class UserController {
             User user = userService.getById(principal.getUser().getId());
             return ResponseEntity.ok(List.of(user));
         }
-        return ResponseEntity.ok(userService.getAllCustomers());
+        return ResponseEntity.ok(userService.getAllCustomersForUser(principal));
     }
 
     @GetMapping("/{id}")
